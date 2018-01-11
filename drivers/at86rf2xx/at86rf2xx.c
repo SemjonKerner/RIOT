@@ -178,6 +178,9 @@ void at86rf2xx_tx_prepare(at86rf2xx_t *dev)
     if (state != AT86RF2XX_PHY_STATE_TX) {
         dev->idle_state = state;
     }
+
+    at86rf2xx_set_state(dev, AT86RF2XX_STATE_PLL_ON);
+
     dev->tx_frame_len = IEEE802154_FCS_LEN;
 }
 
