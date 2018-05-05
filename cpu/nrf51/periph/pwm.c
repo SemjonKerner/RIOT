@@ -126,6 +126,8 @@ void pwm_set(pwm_t dev, uint8_t channel, uint16_t value)
     (void)channel;
 #endif
     assert((dev == 0) && (channel == 0));
+    (void)dev;
+    (void)channel;
 
     /*
      * make sure duty cycle is set at the beginning of each period
@@ -200,6 +202,7 @@ uint8_t pwm_channels(pwm_t dev)
     (void)dev;
 #endif
     assert(dev == 0);
+    (void)dev;
     return 1;
 }
 
