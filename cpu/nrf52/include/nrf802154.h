@@ -44,6 +44,13 @@
 extern "C" {
 #endif
 
+typedef enum {
+    NRF802154_STATE_DISABLED,
+    NRF802154_STATE_RX,
+    NRF802154_STATE_TX,
+    NRF802154_STATE_AACK,
+} nrf802154_state_t;
+
 /**
  * @defgroup drivers_nrf52_802154_conf  nrf802154 driver compile configuration
  * @ingroup drivers_nrf52_802154
