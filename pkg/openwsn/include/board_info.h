@@ -28,9 +28,9 @@
 
 //=========================== defines =========================================
 
-#define INTERRUPT_DECLARATION(); //no declaration
-#define DISABLE_INTERRUPTS()    irq_disable();
-#define ENABLE_INTERRUPTS()     irq_enable();
+#define INTERRUPT_DECLARATION()
+#define DISABLE_INTERRUPTS()                irq_disable();
+#define ENABLE_INTERRUPTS()                 irq_enable();
 
 //===== timer
 
@@ -38,25 +38,18 @@
 #define PORT_RADIOTIMER_WIDTH               uint32_t
 
 #define PORT_SIGNED_INT_WIDTH               int32_t
-#define PORT_TICS_PER_MS                    32
-#define SCHEDULER_WAKEUP()                  //EXTI->SWIER |= EXTI_Line1;
-#define SCHEDULER_ENABLE_INTERRUPT()        //enable in board use EXTI_Line1
-
-//===== pinout
-
-// [PA.2] radio SLP_TR_CNTL
-#define PORT_PIN_RADIO_SLP_TR_CNTL_HIGH()       //GPIOA->ODR |= (1<<2);
-#define PORT_PIN_RADIO_SLP_TR_CNTL_LOW()        //GPIOA->ODR &= ~(1<<2);
-// radio reset line
-// radio /RST
-#define PORT_PIN_RADIO_RESET_HIGH()         //GPIOC->ODR |= 0X0040;// nothing
-#define PORT_PIN_RADIO_RESET_LOW()          //GPIOC->ODR &= ~0X0040;// nothing
-//#define PORT_PIN_RADIO_RESET_LOW()            GPIOC->ODR &= ~(1<<1);
+#define PORT_TICS_PER_MS                    33
+#define SCHEDULER_WAKEUP()
+#define SCHEDULER_ENABLE_INTERRUPT()
 
 // TODO: CHECK TIMINGS!
 //===== IEEE802154E timing
+
+#define SLOTDURATION                        20    // in miliseconds
+
 // time-slot related
-#define PORT_TsSlotDuration                 491     // counter counts one extra count, see datasheet
+#define PORT_TsSlotDuration                 655   //    20ms
+
 // execution speed related
 #define PORT_maxTxDataPrepare               110   //  3355us (not measured)
 #define PORT_maxRxAckPrepare                20    //   610us (not measured)
@@ -65,12 +58,11 @@
 
 // radio speed related
 #define PORT_delayTx                        18    //   549us (not measured)
-#define PORT_delayRx 0 //     0us (can not measure)
-// radio watchdog
+#define PORT_delayRx                         0    //     0us (can not measure)
 
 //===== adaptive_sync accuracy
 
-#define SYNC_ACCURACY                       2     // ticks
+#define SYNC_ACCURACY                        2    // ticks
 
 //=========================== variables =======================================
 
@@ -78,11 +70,5 @@ static const uint8_t rreg_uriquery[] = "h=ucb";
 static const uint8_t infoBoardname[] = "riot-os";
 static const uint8_t infouCName[] = "various";
 static const uint8_t infoRadioName[] = "riot-netdev";
-
-//=========================== prototypes ======================================
-
-//=========================== public ==========================================
-
-//=========================== private =========================================
 
 #endif
