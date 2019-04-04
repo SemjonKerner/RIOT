@@ -53,17 +53,36 @@ static int udp_send(char *addr_str, char *port_str, char *data, unsigned int num
                     unsigned int delay)
 {
     size_t data_len;
+    bool foundNeighbor;
+    open_addr_t parentNeighbor;
     ipv6_addr_t addr;
 
     /* don't run if not in synch */
     if (ieee154e_isSynch() == FALSE) {
-        puts("Error: Node not in synch, exit");
+        puts("Error: Node not in sync, exit");
         return 1;
     }
 
+    /* don't run on dagroot */
+    if (idmanager_getIsDAGroot()) {
+        puts("Error: Node is DAGROOT, exit");
+        return 1;
+    }
+
+    // foundNeighbor = icmpv6rpl_getPreferredParentEui64(&parentNeighbor);
+    // if (foundNeighbor==FALSE) {
+    //     puts("Error: No preferred parent EUI64, exit");
+    //     return 1;
+    // }
+
+    // if (schedule_hasManagedTxCellToNeighbor(&parentNeighbor) == FALSE) {
+    //     puts("Error: No managed TX cell to neighbor, exit");
+    //     return 1;
+    // }
+
     /* parse destination address */
     if (ipv6_addr_from_str(&addr, addr_str) == NULL) {
-        puts("Error: unable to parse destination address");
+        puts("Error: unable to parse destination address, exit");
         return 1;
     }
 
@@ -73,7 +92,7 @@ static int udp_send(char *addr_str, char *port_str, char *data, unsigned int num
     /* get a free packet buffer */
     pkt = openqueue_getFreePacketBuffer(COMPONENT_UINJECT);
     if (pkt == NULL) {
-        puts("Erro: could not create packet buffer");
+        puts("Erro: could not create packet buffer, exit");
         return 1;
     }
 
@@ -108,7 +127,9 @@ static int udp_send(char *addr_str, char *port_str, char *data, unsigned int num
     for (unsigned int i = 0; i < num; i++) {
         printf("Send %u byte over UDP to [%s]:%s\n",
                 (unsigned)data_len, addr_str, port_str);
-        scheduler_push_task(push_pkt_cb, TASKPRIO_COAP);
+        push_pkt_cb();
+        //scheduler_push_task(push_pkt_cb, TASKPRIO_COAP);
+
         xtimer_usleep(delay);
     }
     return 0;
