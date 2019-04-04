@@ -16,6 +16,7 @@ Load this program on your boards. The LEDs should start blinking furiously.
 // bsp modules required
 #include "board_ow.h"
 #include "eui64.h"
+#include "openwsn.h"
 
 //=========================== main ============================================
 
@@ -26,13 +27,17 @@ int main(void) {
 
    uint8_t eui[8];
 
-   // no need to init the board for this feature
+   openwsn_bootstrap();
 
    printf("Get euid now\n");
-   eui64_get(eui);
 
-   for (int i=0; i<8; i++){
-    printf(" 0x%x", eui[i]);
+   for(int j = 0; j<10;j++) {
+    eui64_get(eui);
+     for (int i=0; i<8; i++){
+      printf("%x:", eui[i]);
+     }
+     printf("\n");
+     memset(eui, 0, 8);
    }
    printf("\nEnd main\n");
  }

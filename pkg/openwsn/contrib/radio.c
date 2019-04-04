@@ -18,13 +18,13 @@
  */
 #include <sys/uio.h>
 
-#include "radio.h"
 #include "leds.h"
 #include "debugpins.h"
 #include "sctimer.h"
 
 #include "openwsn.h"
-#include "net/netdev.h"
+#include "radio_ow.h"
+
 #include "net/netopt.h"
 #include "net/ieee802154.h"
 #include "net/netdev/ieee802154.h"
@@ -37,13 +37,6 @@
 #include "at86rf2xx_params.h"
 static at86rf2xx_t at86rf2xx_dev;
 #endif
-
-typedef struct {
-    radio_capture_cbt startFrame_cb;
-    radio_capture_cbt endFrame_cb;
-    radio_state_t state;
-    netdev_t                 *dev;
-} radio_vars_t;
 
 radio_vars_t radio_vars;
 
