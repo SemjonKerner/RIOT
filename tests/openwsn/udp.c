@@ -37,6 +37,7 @@
 
 extern udp_resource_desc_t uinject_vars;
 extern idmanager_vars_t idmanager_vars;
+extern openudp_vars_t openudp_vars;
 
 static uint16_t counter = 0;
 
@@ -46,6 +47,7 @@ void push_pkt_cb(void){
     owerror_t ret = openudp_send(pkt);
     if (ret == E_FAIL) {
         puts("could not send");
+        openqueue_freePacketBuffer(pkt);
     }
 }
 
@@ -98,13 +100,13 @@ static int udp_send(char *addr_str, char *port_str, char *data, unsigned int num
 
     /* change resource port so "send done" callback can be triggered;
      * this is dangerous because it's the destination port */
-    uinject_vars.port = atoi(port_str);
+    //uinject_vars.port = atoi(port_str);
 
     pkt->owner = COMPONENT_UINJECT;
     pkt->creator = COMPONENT_UINJECT;
     pkt->l4_protocol = IANA_UDP;
     pkt->l4_destination_port = atoi(port_str);
-    pkt->l4_sourcePortORicmpv6Type = atoi(port_str);     // TODO
+    pkt->l4_sourcePortORicmpv6Type = uinject_vars.port; // TODO?
     pkt->l3_destinationAdd.type = ADDR_128B;
     memcpy(&pkt->l3_destinationAdd.addr_128b[0], (void *)&addr, 16);
     /* add payload */
@@ -165,7 +167,7 @@ int udp_cmd(int argc, char **argv)
     }
     else if (strcmp(argv[1], "server") == 0) {
         if (argc < 3) {
-            printf("usage: %s server [start|stop]\n", argv[0]);
+            printf("usage: %s server [start|stop|list]\n", argv[0]);
             return 1;
         }
         if (strcmp(argv[2], "start") == 0) {
@@ -177,6 +179,15 @@ int udp_cmd(int argc, char **argv)
             uinject_vars.port = port;
             printf("Set UDP server port to %" PRIu16 "\n", port);
             return 0;
+        }
+        else if (strcmp(argv[2], "list") == 0) {
+            udp_resource_desc_t* resource = openudp_vars.resources;
+            printf("Open UDP Ports: ");
+            while (NULL != resource) {
+                printf("%i ", resource->port);
+                resource = resource->next;
+            }
+            puts("");
         }
         else {
             puts("error: invalid command");

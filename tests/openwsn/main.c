@@ -27,6 +27,7 @@
 
 #include "opendefs.h"
 #include "02a-MAClow/IEEE802154E.h"
+#include "02b-MAChigh/neighbors.h"
 #include "03b-IPv6/icmpv6rpl.h"
 #include "04-TRAN/openudp.h"
 #include "cross-layers/openqueue.h"
@@ -35,9 +36,11 @@
 
 extern idmanager_vars_t idmanager_vars;
 extern icmpv6rpl_vars_t icmpv6rpl_vars;
-//extern neighbors_vars_t neighbors_vars;
+extern neighbors_vars_t neighbors_vars;
+extern openqueue_vars_t openqueue_vars;
 
 udp_resource_desc_t uinject_vars;
+char addr_str[IPV6_ADDR_MAX_STR_LEN];
 
 void uinject_sendDone(OpenQueueEntry_t *msg, owerror_t error)
 {
@@ -80,35 +83,68 @@ static int ifconfig_cmd(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    if (idmanager_vars.isDAGroot) {
-        puts("Node is DAG root");
-    }
 
     open_addr_t* hwaddr;
     open_addr_t temp_my128bID;
-    char addr_str[IPV6_ADDR_MAX_STR_LEN];
 
     memcpy(&temp_my128bID.addr_128b[0], &idmanager_vars.myPrefix.prefix, 8);
     memcpy(&temp_my128bID.addr_128b[8], &idmanager_vars.my64bID.addr_64b, 8);
 
     ipv6_addr_to_str(addr_str, (ipv6_addr_t *)temp_my128bID.addr_128b, sizeof(addr_str));
     printf("inet6 %s\n", addr_str);
-    printf("RPL rank: %i\n", icmpv6rpl_vars.myDAGrank);
-
-
-    //printf("parent: %s\n", _array_2_string(neighbors_vars.neighbors[icmpv6rpl_vars.ParentIndex].addr_64b, 8, addr_str));
 
 
     hwaddr = idmanager_getMyID(ADDR_16B);
-    printf("hwaddr short: %s\n", _array_2_string(hwaddr->addr_16b, 2, addr_str));
+    printf("hwaddr short: %s", _array_2_string(hwaddr->addr_16b, 2, addr_str));
 
     hwaddr = idmanager_getMyID(ADDR_64B);
-    printf("hwaddr long: %s\n", _array_2_string(hwaddr->addr_64b, 8, addr_str));
+    printf("    long: %s\n", _array_2_string(hwaddr->addr_64b, 8, addr_str));
 
     hwaddr = idmanager_getMyID(ADDR_PANID);
-    printf("panid: %s\n", _array_2_string(hwaddr->panid, 2, addr_str));
+    printf("panid: %s\n\n", _array_2_string(hwaddr->panid, 2, addr_str));
 
-    printf("IEEE802154E sync: %i\n", ieee154e_isSynch());
+    printf("IEEE802154E sync: %i\n\n", ieee154e_isSynch());
+
+    if (idmanager_vars.isDAGroot) {
+        puts("Node is DAG root");
+    }
+    else {
+        if(icmpv6rpl_vars.haveParent) {
+            printf("RPL rank: %i\n", icmpv6rpl_vars.myDAGrank);
+            printf("RPL parent: %s\n",\
+                _array_2_string(neighbors_vars.neighbors[icmpv6rpl_vars.ParentIndex].addr_64b.addr_64b, 8, addr_str));
+            ipv6_addr_to_str(addr_str, (ipv6_addr_t *)icmpv6rpl_vars.dao.DODAGID, sizeof(addr_str));
+            printf("RPL DODAG ID: %16s\n", addr_str);
+        }
+        else {
+            puts("NO RPL parent");
+        }
+    }
+    return 0;
+}
+
+static int nc_cmd(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    for (int i = 0; i < MAXNUMNEIGHBORS; i++) {
+
+        printf("%02i. %s\n", i, \
+            _array_2_string(neighbors_vars.neighbors[i].addr_64b.addr_64b, 8, addr_str));
+    }
+
+}
+
+static int q_cmd(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    for (uint8_t i=0;i<QUEUELENGTH;i++) {
+      printf("Creator: 0x%2x\n", openqueue_vars.queue[i].creator);
+      printf("Owner  : 0x%2x\n", openqueue_vars.queue[i].owner);
+    }
 
     return 0;
 }
@@ -136,6 +172,8 @@ extern int udp_cmd(int argc, char **argv);
 
 static const shell_command_t shell_commands[] = {
     { "ifconfig", "Shows assigned IPv6 addresses", ifconfig_cmd },
+    { "nc", "Shows neighbor table", nc_cmd },
+    { "q", "Shows Openqueue", q_cmd },
     { "udp", "Send UDP messages and listen for messages on UDP port", udp_cmd },
     { "rplroot", "Set node as RPL DODAG root node", rpl_cmd },
     { NULL, NULL, NULL }
