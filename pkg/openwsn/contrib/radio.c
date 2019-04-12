@@ -128,12 +128,13 @@ void radio_setFrequency(uint8_t frequency)
 
 void radio_rfOn(void)
 {
-    netopt_state_t state = NETOPT_STATE_STANDBY;
+    netopt_state_t state = NETOPT_STATE_IDLE;
     radio_vars.dev->driver->set(radio_vars.dev, NETOPT_STATE, &(state), sizeof(netopt_state_t));
 }
 
 void radio_rfOff(void)
 {
+    radio_vars.state = RADIOSTATE_TURNING_OFF;
     netopt_state_t state = NETOPT_STATE_STANDBY;
 
     radio_vars.dev->driver->set(radio_vars.dev, NETOPT_STATE, &(state), sizeof(netopt_state_t));
@@ -145,6 +146,7 @@ void radio_rfOff(void)
 void radio_loadPacket(uint8_t *packet, uint16_t len)
 {
     DEBUG("OW radio_loadPacket\n");
+    radio_vars.state = RADIOSTATE_LOADING_PACKET;
     /* NETOPT_PRELOADING w as enabled in the init function so this
        simply loads data to the device buffer */
     iolist_t pkt = {
@@ -168,13 +170,13 @@ void radio_txEnable(void)
 
     radio_vars.state = RADIOSTATE_TX_ENABLED;
 }
+
 void radio_txNow(void)
 {
-
     PORT_TIMER_WIDTH val;
 
+    radio_vars.state = RADIOSTATE_TRANSMITTING;
     netopt_state_t state = NETOPT_STATE_TX;
-
     radio_vars.dev->driver->set(radio_vars.dev, NETOPT_STATE, &state, sizeof(netopt_state_t));
 
     if (radio_vars.startFrame_cb != NULL) {
@@ -196,10 +198,12 @@ void radio_rxEnable(void)
 
     radio_vars.state = RADIOSTATE_LISTENING;
 }
+
 void radio_rxNow(void)
 {
     /* nothing to do */
 }
+
 void radio_getReceivedFrame(uint8_t *bufRead,
                             uint8_t *lenRead,
                             uint8_t maxBufLen,
@@ -208,29 +212,27 @@ void radio_getReceivedFrame(uint8_t *bufRead,
                             bool *crc)
 {
     netdev_ieee802154_rx_info_t rx_info;
+    int num_bytes;
 
-    int bytes_expected = radio_vars.dev->driver->recv(radio_vars.dev, bufRead, maxBufLen, &rx_info);
+    /* call with max frame length + 1 to trick the driver */
+    num_bytes = radio_vars.dev->driver->recv(radio_vars.dev, bufRead, IEEE802154_FRAME_LEN_MAX + 1, &rx_info);
 
-    if (bytes_expected) {
-        netdev_ieee802154_rx_info_t rx_info;
-        DEBUG("ow_netdev: received frame of size %i\n", bytes_expected);
-        int nread = radio_vars.dev->driver->recv(radio_vars.dev, bufRead, bytes_expected, &rx_info);
-        *crc = true;
-        if (nread <= 2) {
-            *crc = false;
-            return;
-        }
-        *lenRead = nread + 2;
+    if (num_bytes <= 2) {
+        radio_rxEnable();
+        return;
+    }
 
-        *lqi = 0;
-        *rssi = 0;
+    /* get return parameters */
+    *lenRead = num_bytes + 2;
 
-        /* TODO: check CRC */
+    *rssi = rx_info.rssi;
+    *lqi = rx_info.lqi;
+    *crc = false; /* default false */
+
+    if(rx_info.crc) {
         *crc = true;
     }
-    else {
-        *crc = false;
-    }
+    radio_rxEnable();
 }
 
 PORT_TIMER_WIDTH capturedTime = 0u;
@@ -250,14 +252,17 @@ static void _event_cb(netdev_t *dev, netdev_event_t event)
         assert( capturedTime != 0u);
         switch (event) {
             case NETDEV_EVENT_RX_STARTED:
+                radio_vars.state = RADIOSTATE_RECEIVING;
                 radio_vars.startFrame_cb(capturedTime);
                 DEBUG("NETDEV_EVENT_RX_STARTED\n");
                 break;
             case NETDEV_EVENT_RX_COMPLETE:
+                radio_vars.state = RADIOSTATE_TXRX_DONE;
                 radio_vars.endFrame_cb(capturedTime);
                 DEBUG("NETDEV_EVENT_RX_COMPLETE\n");
                 break;
             case NETDEV_EVENT_TX_COMPLETE:
+                radio_vars.state = RADIOSTATE_TXRX_DONE;
                 radio_vars.endFrame_cb(capturedTime);
                 DEBUG("NETDEV_EVENT_TX_COMPLETE\n");
                 break;
