@@ -211,6 +211,7 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
      */
     if (info != NULL) {
         uint8_t ed = 0;
+        uint8_t reg = 0;
         netdev_ieee802154_rx_info_t *radio_info = info;
         at86rf2xx_fb_read(dev, &(radio_info->lqi), 1);
 
@@ -226,6 +227,8 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
         radio_info->rssi = RSSI_BASE_VAL + ed;
         DEBUG("[at86rf2xx] LQI:%d high is good, RSSI:%d high is either good or"
               "too much interference.\n", radio_info->lqi, radio_info->rssi);
+        reg = at86rf2xx_reg_read(dev, AT86RF2XX_REG__PHY_RSSI);
+        radio_info->crc = (reg & 0x80)>>7;
     }
     else {
         at86rf2xx_fb_stop(dev);
