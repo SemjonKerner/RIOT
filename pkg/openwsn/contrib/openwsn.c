@@ -59,8 +59,7 @@ static void *_event_loop(void *arg)
 
     DEBUG("[openwsn_bootstrap]: init scheduler\n");
     scheduler_init();
-
-    DEBUG("[openwsn_bootstrap]: start scheduler");
+    DEBUG("[openwsn_bootstrap]: start scheduler\n");
     /* starts the OpenWSN scheduler which contains a loop */
     scheduler_start();
     return NULL;
