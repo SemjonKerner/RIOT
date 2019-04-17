@@ -26,6 +26,7 @@
 #include "net/ipv6/addr.h"
 
 #include "opendefs.h"
+#include "scheduler.h"
 #include "02a-MAClow/IEEE802154E.h"
 #include "02b-MAChigh/neighbors.h"
 #include "03b-IPv6/icmpv6rpl.h"
@@ -38,6 +39,8 @@ extern idmanager_vars_t idmanager_vars;
 extern icmpv6rpl_vars_t icmpv6rpl_vars;
 extern neighbors_vars_t neighbors_vars;
 extern openqueue_vars_t openqueue_vars;
+extern schedule_vars_t schedule_vars;
+extern scheduler_dbg_t  scheduler_dbg;
 
 udp_resource_desc_t uinject_vars;
 char addr_str[IPV6_ADDR_MAX_STR_LEN];
@@ -129,11 +132,12 @@ static int nc_cmd(int argc, char **argv)
     (void)argv;
 
     for (int i = 0; i < MAXNUMNEIGHBORS; i++) {
-
-        printf("%02i. %s\n", i, \
-            _array_2_string(neighbors_vars.neighbors[i].addr_64b.addr_64b, 8, addr_str));
+        _array_2_string(neighbors_vars.neighbors[i].addr_64b.addr_64b, 8, addr_str);
+        if(memcmp(addr_str, "00:00:00:00:00:00:00:00", 8) != 0) {
+            printf("%02i. %s\n", i, addr_str);
+        }
     }
-
+    return 0;
 }
 
 static int q_cmd(int argc, char **argv)
@@ -144,6 +148,38 @@ static int q_cmd(int argc, char **argv)
     for (uint8_t i=0;i<QUEUELENGTH;i++) {
       printf("Creator: 0x%2x\n", openqueue_vars.queue[i].creator);
       printf("Owner  : 0x%2x\n", openqueue_vars.queue[i].owner);
+    }
+
+    return 0;
+}
+
+static int as_cmd(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    for (int i=0;i<MAXACTIVESLOTS;i++) {
+        switch(schedule_vars.scheduleBuf[i].type) {
+            case CELLTYPE_TX:
+                printf("neigh: %s, slot: %03i, chan: %02i, type: TX\n", \
+                    _array_2_string(schedule_vars.scheduleBuf[i].neighbor.addr_64b, 8, addr_str),
+                    schedule_vars.scheduleBuf[i].slotOffset, \
+                    schedule_vars.scheduleBuf[i].channelOffset);
+                break;
+            case CELLTYPE_RX:
+                    printf("slot: %03i, chan: %02i, type: RX\n", \
+                    schedule_vars.scheduleBuf[i].slotOffset, \
+                    schedule_vars.scheduleBuf[i].channelOffset);
+                break;
+            case CELLTYPE_TXRX:
+                    printf("neigh: %s, slot: %03i, chan: %02i, type: RXTX\n", \
+                    _array_2_string(schedule_vars.scheduleBuf[i].neighbor.addr_64b, 8, addr_str),
+                    schedule_vars.scheduleBuf[i].slotOffset, \
+                    schedule_vars.scheduleBuf[i].channelOffset);
+                break;
+            default:
+                break;
+        }
     }
 
     return 0;
@@ -168,12 +204,26 @@ static int rpl_cmd(int argc, char **argv)
     return 0;
 }
 
+static int sc_cmd(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    /* TODO allow other prefixes via shell ?!? */
+    printf("Current tasks:%i\n", scheduler_dbg.numTasksCur);
+    printf("Max tasks:    %i\n", scheduler_dbg.numTasksMax);
+
+    return 0;
+}
+
 extern int udp_cmd(int argc, char **argv);
 
 static const shell_command_t shell_commands[] = {
     { "ifconfig", "Shows assigned IPv6 addresses", ifconfig_cmd },
     { "nc", "Shows neighbor table", nc_cmd },
     { "q", "Shows Openqueue", q_cmd },
+    { "as", "Shows active cells", as_cmd },
+    { "sc", "Shows scheduler (openos) dbg states", sc_cmd },
     { "udp", "Send UDP messages and listen for messages on UDP port", udp_cmd },
     { "rplroot", "Set node as RPL DODAG root node", rpl_cmd },
     { NULL, NULL, NULL }
