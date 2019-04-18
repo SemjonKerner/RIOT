@@ -145,9 +145,9 @@ static int q_cmd(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    for (uint8_t i=0;i<QUEUELENGTH;i++) {
-      printf("Creator: 0x%2x\n", openqueue_vars.queue[i].creator);
-      printf("Owner  : 0x%2x\n", openqueue_vars.queue[i].owner);
+    for (uint8_t i = 0; i < QUEUELENGTH; i++) {
+      printf("Creator: 0x%2x, ", openqueue_vars.queue[i].creator);
+      printf("Owner: 0x%2x\n", openqueue_vars.queue[i].owner);
     }
 
     return 0;
