@@ -59,28 +59,8 @@ static int udp_send(char *addr_str, char *port_str, char *data, unsigned int num
     open_addr_t parentNeighbor;
     ipv6_addr_t addr;
 
-    /* don't run if not in synch */
-    if (ieee154e_isSynch() == FALSE) {
-        puts("Error: Node not in sync, exit");
-        return 1;
-    }
-
-    /* don't run on dagroot */
-    if (idmanager_getIsDAGroot()) {
-        puts("Error: Node is DAGROOT, exit");
-        return 1;
-    }
-
-    // foundNeighbor = icmpv6rpl_getPreferredParentEui64(&parentNeighbor);
-    // if (foundNeighbor==FALSE) {
-    //     puts("Error: No preferred parent EUI64, exit");
-    //     return 1;
-    // }
-
-    // if (schedule_hasManagedTxCellToNeighbor(&parentNeighbor) == FALSE) {
-    //     puts("Error: No managed TX cell to neighbor, exit");
-    //     return 1;
-    // }
+    data_len = strlen(data);
+    uint8_t asnArray[data_len];
 
     /* parse destination address */
     if (ipv6_addr_from_str(&addr, addr_str) == NULL) {
@@ -88,49 +68,67 @@ static int udp_send(char *addr_str, char *port_str, char *data, unsigned int num
         return 1;
     }
 
-    data_len = strlen(data);
-    uint8_t asnArray[data_len];
-
-    /* get a free packet buffer */
-    pkt = openqueue_getFreePacketBuffer(COMPONENT_UINJECT);
-    if (pkt == NULL) {
-        puts("Erro: could not create packet buffer, exit");
-        return 1;
-    }
-
-    /* change resource port so "send done" callback can be triggered;
-     * this is dangerous because it's the destination port */
-    //uinject_vars.port = atoi(port_str);
-
-    pkt->owner = COMPONENT_UINJECT;
-    pkt->creator = COMPONENT_UINJECT;
-    pkt->l4_protocol = IANA_UDP;
-    pkt->l4_destination_port = atoi(port_str);
-    pkt->l4_sourcePortORicmpv6Type = uinject_vars.port; // TODO?
-    pkt->l3_destinationAdd.type = ADDR_128B;
-    memcpy(&pkt->l3_destinationAdd.addr_128b[0], (void *)&addr, 16);
-    /* add payload */
-    packetfunctions_reserveHeaderSize(pkt, data_len);
-    memcpy(&pkt->payload[0], data, data_len);
-
-    packetfunctions_reserveHeaderSize(pkt, sizeof(uint16_t));
-    pkt->payload[1] = (uint8_t)((counter & 0xff00) >> 8);
-    pkt->payload[0] = (uint8_t)(counter & 0x00ff);
-    counter++;
-
-    packetfunctions_reserveHeaderSize(pkt, sizeof(asn_t));
-    ieee154e_getAsn(asnArray);
-    pkt->payload[0] = asnArray[0];
-    pkt->payload[1] = asnArray[1];
-    pkt->payload[2] = asnArray[2];
-    pkt->payload[3] = asnArray[3];
-    pkt->payload[4] = asnArray[4];
-
     for (unsigned int i = 0; i < num; i++) {
+
         printf("Send %u byte over UDP to [%s]:%s\n",
                 (unsigned)data_len, addr_str, port_str);
-        push_pkt_cb();
-        //scheduler_push_task(push_pkt_cb, TASKPRIO_COAP);
+
+        /* don't run if not in synch */
+        if (ieee154e_isSynch() == FALSE) {
+            puts("Error: Node not in sync, exit");
+            return 1;
+        }
+
+        /* don't run on dagroot */
+        if (idmanager_getIsDAGroot()) {
+            puts("Error: Node is DAGROOT, exit");
+            return 1;
+        }
+
+        foundNeighbor = icmpv6rpl_getPreferredParentEui64(&parentNeighbor);
+        if (foundNeighbor==FALSE) {
+            puts("Error: No preferred parent EUI64, exit");
+            return 1;
+        }
+
+        // if (schedule_hasManagedTxCellToNeighbor(&parentNeighbor) == FALSE) {
+        //     puts("Error: No managed TX cell to neighbor, exit");
+        //     return 1;
+        // }
+
+        /* get a free packet buffer */
+        pkt = openqueue_getFreePacketBuffer(COMPONENT_UINJECT);
+        if (pkt == NULL) {
+            puts("Erro: could not create packet buffer, exit");
+            return 1;
+        }
+
+        pkt->owner = COMPONENT_UINJECT;
+        pkt->creator = COMPONENT_UINJECT;
+        pkt->l4_protocol = IANA_UDP;
+        pkt->l4_destination_port = atoi(port_str);
+        pkt->l4_sourcePortORicmpv6Type = uinject_vars.port; // TODO?
+        pkt->l3_destinationAdd.type = ADDR_128B;
+        memcpy(&pkt->l3_destinationAdd.addr_128b[0], (void *)&addr, 16);
+        /* add payload */
+        packetfunctions_reserveHeaderSize(pkt, data_len);
+        memcpy(&pkt->payload[0], data, data_len);
+
+        packetfunctions_reserveHeaderSize(pkt, sizeof(uint16_t));
+        pkt->payload[1] = (uint8_t)((counter & 0xff00) >> 8);
+        pkt->payload[0] = (uint8_t)(counter & 0x00ff);
+        counter++;
+
+        packetfunctions_reserveHeaderSize(pkt, sizeof(asn_t));
+        ieee154e_getAsn(asnArray);
+        pkt->payload[0] = asnArray[0];
+        pkt->payload[1] = asnArray[1];
+        pkt->payload[2] = asnArray[2];
+        pkt->payload[3] = asnArray[3];
+        pkt->payload[4] = asnArray[4];
+
+        //push_pkt_cb();
+        scheduler_push_task(push_pkt_cb, TASKPRIO_COAP);
 
         xtimer_usleep(delay);
     }

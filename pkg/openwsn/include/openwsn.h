@@ -23,6 +23,8 @@
 #ifndef OPENWSN_H
 #define OPENWSN_H
 
+#include "thread_flags.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
