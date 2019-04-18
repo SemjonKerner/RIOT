@@ -32,13 +32,7 @@
 #define ENABLE_DEBUG                (0)
 #include "debug.h"
 
-#ifdef MODULE_AT86RF2XX
-#include "at86rf2xx.h"
-#include "at86rf2xx_params.h"
-static at86rf2xx_t at86rf2xx_dev;
-#endif
-
-radio_vars_t radio_vars;
+extern radio_vars_t radio_vars;
 
 static void _event_cb(netdev_t *dev, netdev_event_t event);
 
@@ -48,13 +42,13 @@ void radio_init(void)
     DEBUG("OW initialize riot-adaptation\n");
 
     uint16_t dev_type;
-    memset(&radio_vars, 0, sizeof(radio_vars_t));
     radio_vars.state = RADIOSTATE_STOPPED;
+//    memset(&radio_vars, 0, sizeof(radio_vars_t));
 
-#ifdef MODULE_AT86RF2XX
-    radio_vars.dev = (netdev_t *)&at86rf2xx_dev.netdev.netdev;
-    at86rf2xx_setup(&at86rf2xx_dev, &at86rf2xx_params[0]);
-#endif
+// #ifdef MODULE_AT86RF2XX
+//     radio_vars.dev = (netdev_t *)&at86rf2xx_dev.netdev.netdev;
+//     at86rf2xx_setup(&at86rf2xx_dev, &at86rf2xx_params[0]);
+// #endif
 
     DEBUG("OW initialize RIOT radio (netdev)\n");
     radio_vars.dev->driver->init(radio_vars.dev);
@@ -138,6 +132,8 @@ void radio_rfOff(void)
     netopt_state_t state = NETOPT_STATE_STANDBY;
 
     radio_vars.dev->driver->set(radio_vars.dev, NETOPT_STATE, &(state), sizeof(netopt_state_t));
+
+    debugpins_radio_clr();
     leds_radio_off();
 
     radio_vars.state = RADIOSTATE_RFOFF;
@@ -166,6 +162,7 @@ void radio_txEnable(void)
 
     radio_vars.state = RADIOSTATE_ENABLING_TX;
 
+    debugpins_radio_set();
     leds_radio_on();
 
     radio_vars.state = RADIOSTATE_TX_ENABLED;
@@ -191,6 +188,7 @@ void radio_rxEnable(void)
 
     radio_vars.state = RADIOSTATE_ENABLING_RX;
 
+    debugpins_radio_set();
     leds_radio_on();
 
     netopt_state_t state = NETOPT_STATE_IDLE;
