@@ -229,8 +229,19 @@ static const shell_command_t shell_commands[] = {
     { NULL, NULL, NULL }
 };
 
+#ifdef BTN0_PIN
+static void _irq_handler(void *arg)
+{
+    (void)arg;
+    puts("BTN");
+}
+#endif
+
 int main(void)
 {
+#ifdef BTN0_PIN
+    gpio_init_int(BTN0_PIN, GPIO_IN, GPIO_RISING, _irq_handler, NULL);
+#endif
     puts("OpenWSN UDP test");
 
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
