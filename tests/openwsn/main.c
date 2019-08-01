@@ -49,6 +49,7 @@ void uinject_sendDone(OpenQueueEntry_t *msg, owerror_t error)
 {
     (void)error;
 
+    printf("msg.l2_sendDoneError: %x\n", msg->l2_sendDoneError);
     openqueue_freePacketBuffer(msg);
     puts("Send success");
 }
@@ -140,16 +141,65 @@ static int nc_cmd(int argc, char **argv)
     return 0;
 }
 
+static const struct {
+    char *name;
+    int id;
+} names[] = {
+   { "?", COMPONENT_NULL },
+   { "owsn", COMPONENT_OPENWSN },
+   { "idmanager", COMPONENT_IDMANAGER },
+   { "oqueue", COMPONENT_OPENQUEUE },
+   { "oserial", COMPONENT_OPENSERIAL },
+   { "pktfuncs", COMPONENT_PACKETFUNCTIONS },
+   { "random", COMPONENT_RANDOM },
+   { "radio", COMPONENT_RADIO },
+   { "154", COMPONENT_IEEE802154 },
+   { "154e", COMPONENT_IEEE802154E },
+   { "6top2154e", COMPONENT_SIXTOP_TO_IEEE802154E },
+   { "154e26top", COMPONENT_IEEE802154E_TO_SIXTOP },
+   { "6top", COMPONENT_SIXTOP },
+   { "neigh", COMPONENT_NEIGHBORS },
+   { "sched", COMPONENT_SCHEDULE },
+   { "6topres", COMPONENT_SIXTOP_RES },
+   { "bridge", COMPONENT_OPENBRIDGE },
+   { "iphc", COMPONENT_IPHC },
+   { "fwd", COMPONENT_FORWARDING },
+   { "icmpv6", COMPONENT_ICMPv6 },
+   { "icmpv6ech", COMPONENT_ICMPv6ECHO },
+   { "icmpv6rtr", COMPONENT_ICMPv6ROUTER },
+   { "icmpv6rpl", COMPONENT_ICMPv6RPL },
+   { "udp", COMPONENT_OPENUDP },
+   { "coap", COMPONENT_OPENCOAP },
+   { "c6t", COMPONENT_C6T },
+   { "uinject", COMPONENT_UINJECT },
+};
+
+char * _get_name(int id) {
+    for (unsigned i = 0; i < (sizeof(names) / sizeof(names[0])); i++) {
+      if(id == names[i].id) {
+          return names[i].name;
+      }
+    }
+    return;
+}
+
 static int q_cmd(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
 
-    for (uint8_t i = 0; i < QUEUELENGTH; i++) {
-      printf("Creator: 0x%2x, ", openqueue_vars.queue[i].creator);
-      printf("Owner: 0x%2x\n", openqueue_vars.queue[i].owner);
-    }
+    bool queue = 1;
 
+    for (uint8_t i = 0; i < QUEUELENGTH; i++) {
+        if (openqueue_vars.queue[i].creator || openqueue_vars.queue[i].owner) {
+            queue = 0;
+            printf("Creator: %.9s, ", _get_name(openqueue_vars.queue[i].creator));
+            printf("Owner: %.9s\n", _get_name(openqueue_vars.queue[i].owner));
+        }
+    }
+    if(queue) {
+        puts("openqueue empty");
+    }
     return 0;
 }
 
