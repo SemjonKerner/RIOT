@@ -381,6 +381,12 @@ ifneq (,$(filter gnrc_pktdump,$(USEMODULE)))
   USEMODULE += od
 endif
 
+ifneq (,$(filter gnrc_6top,$(USEMODULE)))
+  USEMODULE += gnrc_netif
+  USEMODULE += xtimer
+  #TODO: WIP add all used modules
+endif
+
 ifneq (,$(filter od,$(USEMODULE)))
   USEMODULE += fmt
 endif

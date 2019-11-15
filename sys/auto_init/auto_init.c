@@ -169,6 +169,11 @@ void auto_init(void)
     DEBUG("Auto init Skald\n");
     skald_init();
 #endif
+#ifdef MODULE_GNRC_6TOP
+    DEBUG("Auto init gnrc_6top module.\n")
+    extern void gnrc_6top_init();
+    gnrc_6top_init();
+#endif
 #ifdef MODULE_CORD_COMMON
     DEBUG("Auto init cord_common module\n");
     extern void cord_common_init(void);
