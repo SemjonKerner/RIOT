@@ -169,6 +169,11 @@ void auto_init(void)
     DEBUG("Auto init Skald\n");
     skald_init();
 #endif
+#ifdef MODULE_OPENWSN
+    DEBUG("Auto init gnrc_6top module.\n")
+    extern void openwsn_bootstrap();
+    openwsn_bootstrap();
+#endif
 #ifdef MODULE_GNRC_6TOP
     DEBUG("Auto init gnrc_6top module.\n")
     extern void gnrc_6top_init();

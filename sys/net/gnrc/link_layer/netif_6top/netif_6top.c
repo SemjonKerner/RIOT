@@ -44,12 +44,7 @@
 #define NETTYPE                 GNRC_NETTYPE_UNDEF
 #endif
 
-/* allocate a stack for the netif device */
-static char _stack[THREAD_STACKSIZE_DEFAULT];
-static thread_t *_netif_thread;
-
 /* keep the actual device state */
-static gnrc_netif_t* _gnrc_6top_netif = NULL;
 static gnrc_nettype_t _nettype = NETTYPE;
 
 static void _netif_init(gnrc_netif_t *netif)
@@ -69,19 +64,13 @@ static int _netif_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
     int res;
 
     gnrc_netif_hdr_t *hdr = (gnrc_netif_hdr_t *)pkt->data;
-    /* if packet is bcast or mcast, we send it to every connected node */
+    /* if packet is bcast or mcast, we send without addr */
     if (hdr->flags &
         (GNRC_NETIF_HDR_FLAGS_BROADCAST | GNRC_NETIF_HDR_FLAGS_MULTICAST)) {
-        nimble_netif_conn_foreach(NIMBLE_NETIF_L2CAP_CONNECTED,
-                                  _netif_send_iter, pkt->next);
-        res = (int)gnrc_pkt_len(pkt->next);
     }
     /* send unicast */
     else {
-        int handle = nimble_netif_conn_get_by_addr(
-            gnrc_netif_hdr_get_dst_addr(hdr));
-        nimble_netif_conn_t *conn = nimble_netif_conn_get(handle);
-        res = _send_pkt(conn, pkt->next);
+        res = _send_pkt(pkt->next);
     }
 
     /* release the packet in GNRC's packet buffer */
@@ -93,26 +82,22 @@ static int _netif_send(gnrc_netif_t *netif, gnrc_pktsnip_t *pkt)
 static gnrc_pktsnip_t *_netif_recv(gnrc_netif_t *netif)
 {
     (void)netif;
+    /*wenn openwsn einen thread nutzt, dann "on_data" function als openwsn cb registrieren und
+     *  = 15.4 header parsen*/
+    /*TODO: copy pasta von ieee802.15.4*/
     return NULL;
 }
 
-static const gnrc_netif_ops_t _nimble_netif_ops = {
+static const gnrc_netif_ops_t _6top_netif_ops = {
     .init = _netif_init,
     .send = _netif_send,
     .recv = _netif_recv,
-    .get =  NULL, // gnrc_netif_get_from_netdev,
-    .set = NULL, // gnrc_netif_set_from_netdev,
+    .get =  NULL, // gnrc_netif_get_from_netdev
+    .set = NULL, // gnrc_netif_set_from_netdev
     .msg_handler = NULL,
 };
 
-/* awaits netdev_t with an initialized netdev_driver_t */
-static netdev_t* _6top_netdev;
-void gnrc_6top_netdev_init(netdev_driver_t* gnrc_6top_netdev)
-{
-    _6top_netdev = gnrc_6top_netdev;
-}
-
-static void _recv_dummy()
+static void _recv_cb_dummy()
 {
     /* allocate netif header */
     gnrc_pktsnip_t *if_snip = gnrc_netif_hdr_build(NULL, 0, NULL, 0);
@@ -123,7 +108,7 @@ static void _recv_dummy()
         gnrc_netif_hdr_set_netif(if_snip->data, _gnrc_6top_netif);
 
         /* allocate space in the pktbuf to store the packet */
-        uint8_t payload_data[] = {0x7A, 0x33, 0x3B};
+        uint8_t payload_data[] = {/*TODO 15.4 header */ 0x7A, 0x33, 0x3B};
 
         /* copy payload from mbuf into pktbuffer */
         gnrc_pktsnip_t *payload = gnrc_pktbuf_add(if_snip, payload_data,
@@ -138,25 +123,26 @@ static void _recv_dummy()
     }
 }
 
-void gnrc_6top_init(void)
+gnrc_netif_t *gnrc_6top_create(char *stack, int stacksize,
+                                           char priority, char *name,
+                                           netdev_t *netdev)
 {
-    int res;
-    (void)res;
-
-    /* setup the connection context table */
-    nimble_netif_conn_init();
-
-    /* initialize of BLE related buffers */
-    res = os_mempool_init(&_mem_pool, MBUF_CNT, MBUF_SIZE, _mem, "nim_gnrc");
-    assert(res == 0);
-    res = os_mbuf_pool_init(&_mbuf_pool, &_mem_pool, MBUF_SIZE, MBUF_CNT);
-    assert(res == 0);
-
-    res = ble_l2cap_create_server(NIMBLE_NETIF_CID, MTU_SIZE,
-                                  _on_l2cap_server_evt, NULL);
-    assert(res == 0);
-    (void)res;
-
-    gnrc_netif_create(_stack, sizeof(_stack), GNRC_NETIF_PRIO,
-                      "nimble_netif", &_nimble_netdev_dummy, &_nimble_netif_ops);
+    return gnrc_netif_create(stack, stacksize, priority, name, netdev,
+                             &_6top_netif_ops);
 }
+
+
+/*
+openwsn_bootstrap() - init function : auto_init
+openwsn_mcps_data_request(addr, buffer, bufferlen) - send function
+openwsn_mlme_set_slotframe_request(slotframelen) - set slotframe len
+res = openwsn_mlme_set_link_request(bool add/rm, channel, rx/tx/adv,
+                                    bool ???, slt_ofst, addr) - init cell
+openwsn_mlme_set_role(role) - set role (pancoord, coord, leaf)
+addr = idmanager_getMyID(ADDR_64B) - get mac addr of node
+
+mlme_sync_indication - callback when synced
+mlme_sync_loss_indication - callback when desynced
+ow_mcps_data_confirm(status) - callback when send, status != 0 is an error
+ow_mcps_data_indication(char *data, datalen) - recv function
+*/
