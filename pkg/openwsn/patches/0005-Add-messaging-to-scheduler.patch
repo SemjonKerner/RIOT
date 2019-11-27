@@ -1,10 +1,10 @@
 From b68ce568ac0d90730c97f375c0ee461855c378b7 Mon Sep 17 00:00:00 2001
 From: PeterKietzmann <peter.kietzmann@haw-hamburg.de>
 Date: Wed, 14 Feb 2018 16:02:25 +0100
-Subject: [PATCH 5/6] Add messaging to scheduler
+Subject: [PATCH 05/13] Add messaging to scheduler
 
 ---
- kernel/openos/scheduler.c | 62 ++++++++++++++++++++++++++++++-----------------
+ kernel/openos/scheduler.c | 62 +++++++++++++++++++++++++--------------
  1 file changed, 40 insertions(+), 22 deletions(-)
 
 diff --git a/kernel/openos/scheduler.c b/kernel/openos/scheduler.c
@@ -105,5 +105,5 @@ index 34ce8ca3..ed30afae 100644
  
  //=========================== private =========================================
 -- 
-2.14.1
+2.17.1
 

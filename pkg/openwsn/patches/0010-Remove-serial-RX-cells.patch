@@ -1,0 +1,32 @@
+From f8c202f2f7c48b9f0b3d87db6d608fd1513a868f Mon Sep 17 00:00:00 2001
+From: Jose Alamos <jose.alamos@haw-hamburg.de>
+Date: Fri, 29 Mar 2019 16:58:14 +0100
+Subject: [PATCH 10/13] Remove serial RX cells
+
+---
+ openstack/02b-MAChigh/schedule.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/openstack/02b-MAChigh/schedule.c b/openstack/02b-MAChigh/schedule.c
+index e415fb65..b153b9e2 100644
+--- a/openstack/02b-MAChigh/schedule.c
++++ b/openstack/02b-MAChigh/schedule.c
+@@ -47,6 +47,7 @@ void schedule_init(void) {
+         schedule_startDAGroot();
+     }
+     
++#ifndef OW_MAC_ONLY
+     // serial RX slot(s)
+     start_slotOffset += SCHEDULE_MINIMAL_6TISCH_ACTIVE_CELLS;
+     memset(&temp_neighbor,0,sizeof(temp_neighbor));
+@@ -59,6 +60,7 @@ void schedule_init(void) {
+             &temp_neighbor                         // neighbor
+         );
+     }
++#endif
+ }
+ 
+ /**
+-- 
+2.17.1
+

@@ -1,7 +1,7 @@
 From d5af70bd8dbf392907410dcca17a84ae9e4f4380 Mon Sep 17 00:00:00 2001
 From: PeterKietzmann <peter.kietzmann@haw-hamburg.de>
 Date: Thu, 8 Feb 2018 10:23:00 +0100
-Subject: [PATCH 2/6] Rename includes for RIOT-OpenWSN board
+Subject: [PATCH 02/13] Rename includes for RIOT-OpenWSN board
 
 ---
  bsp/boards/radio.h        | 2 +-
@@ -49,5 +49,5 @@ index dabea8bd..34ce8ca3 100644
  #include "leds.h"
  
 -- 
-2.14.1
+2.17.1
 

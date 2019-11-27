@@ -1,7 +1,7 @@
 From f434eb788b91eb247354e95ea2ba096d290fac3e Mon Sep 17 00:00:00 2001
 From: PeterKietzmann <peter.kietzmann@haw-hamburg.de>
 Date: Thu, 8 Feb 2018 12:19:15 +0100
-Subject: [PATCH 4/6] Fix unrelated warning
+Subject: [PATCH 04/13] Fix unrelated warning
 
 ---
  drivers/common/openserial.c          | 2 ++
@@ -34,5 +34,5 @@ index 8f772377..7a876e31 100644
     uint16_t newSlotDuration;
     
 -- 
-2.14.1
+2.17.1
 
