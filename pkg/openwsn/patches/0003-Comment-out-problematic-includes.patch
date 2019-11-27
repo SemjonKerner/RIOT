@@ -1,7 +1,7 @@
 From 587609720250906a6ae5b6d5bd5c1daca2dd3349 Mon Sep 17 00:00:00 2001
 From: PeterKietzmann <peter.kietzmann@haw-hamburg.de>
 Date: Thu, 8 Feb 2018 11:25:18 +0100
-Subject: [PATCH 3/6] Comment out problematic includes
+Subject: [PATCH 03/13] Comment out problematic includes
 
 ---
  openstack/02b-MAChigh/msf.c |  2 +-
@@ -68,5 +68,5 @@ index f5656f77..edeaf28c 100644
        COMPONENT_OPENWSN,ERR_BOOTED,
        (errorparameter_t)0,
 -- 
-2.14.1
+2.17.1
 

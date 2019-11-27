@@ -1,16 +1,15 @@
-From 0995d9108b1ab8f97029dcfcea4a670a17f05dde Mon Sep 17 00:00:00 2001
+From 2089def3c8fd6108620f2267438e6a0095cf616a Mon Sep 17 00:00:00 2001
 From: PeterKietzmann <peter.kietzmann@haw-hamburg.de>
 Date: Thu, 18 Apr 2019 11:46:35 +0200
-Subject: [PATCH] DEBUG UGLY
+Subject: [PATCH 07/13] DEBUG UGLY
 
 ---
  kernel/openos/scheduler.c          | 27 +++++++++++++++++----------
  openstack/02b-MAChigh/neighbors.c  |  4 +++-
- openstack/02b-MAChigh/sixtop.c     |  8 ++++++++
  openstack/03b-IPv6/icmpv6rpl.c     |  2 ++
  openstack/cross-layers/openqueue.c |  1 +
  openstack/openstack.c              |  2 +-
- 6 files changed, 32 insertions(+), 12 deletions(-)
+ 5 files changed, 24 insertions(+), 12 deletions(-)
 
 diff --git a/kernel/openos/scheduler.c b/kernel/openos/scheduler.c
 index ed30afae..aeccdcb7 100644
@@ -114,32 +113,6 @@ index d17c8eb0..6e8b5fb1 100644
     neighbors_vars.neighbors[neighborIndex].used                      = FALSE;
     neighbors_vars.neighbors[neighborIndex].parentPreference          = 0;
     neighbors_vars.neighbors[neighborIndex].stableNeighbor            = FALSE;
-diff --git a/openstack/02b-MAChigh/sixtop.c b/openstack/02b-MAChigh/sixtop.c
-index 021b353c..265da49d 100644
---- a/openstack/02b-MAChigh/sixtop.c
-+++ b/openstack/02b-MAChigh/sixtop.c
-@@ -708,6 +708,8 @@ This is one of the MAC management tasks. This function inlines in the
- timers_res_fired() function, but is declared as a separate function for better
- readability of the code.
- */
-+#include "openqueue.h"
-+extern openqueue_vars_t openqueue_vars;
- port_INLINE void sixtop_sendEB(void) {
-     OpenQueueEntry_t* eb;
-     uint8_t     i;
-@@ -759,6 +761,12 @@ port_INLINE void sixtop_sendEB(void) {
-    
-     if (sixtop_vars.busySendingEB==TRUE) {
-         // don't continue if I'm still sending a previous EB
-+        puts("EB err still sending previos");
-+        for (uint8_t i = 0; i < QUEUELENGTH; i++) {
-+          printf("Creator: 0x%2x, ", openqueue_vars.queue[i].creator);
-+          printf("Owner: 0x%2x\n", openqueue_vars.queue[i].owner);
-+        }
-+        __BKPT(1);
-         return;
-     }
-     
 diff --git a/openstack/03b-IPv6/icmpv6rpl.c b/openstack/03b-IPv6/icmpv6rpl.c
 index 4dcc7075..bc41721b 100644
 --- a/openstack/03b-IPv6/icmpv6rpl.c
