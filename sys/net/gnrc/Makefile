@@ -1,3 +1,6 @@
+ifneq (,$(filter gnrc_6top,$(USEMODULE)))
+  DIRS += link_layer/gnrc_6top
+endif
 ifneq (,$(filter gnrc_dhcpv6,$(USEMODULE)))
   DIRS += application_layer/dhcpv6
 endif

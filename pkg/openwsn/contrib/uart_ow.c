@@ -42,10 +42,11 @@ uart_vars_t uart_vars;
 
 volatile uint8_t uart_rx_byte;
 
+/* TODO
 static void _riot_rx_cb(void *arg, uint8_t data)
 {
     (void)arg;
-    //uart_rx_byte = data;
+    (void)data; //uart_rx_byte = data;
     // uart_vars.rxCb();
 }
 
@@ -54,7 +55,7 @@ static void _riot_tx_cb(void *arg, int count)
     (void)arg;
     (void)count;
     // uart_vars.txCb();
-}
+}*/
 
 void uart_init_ow(void)
 {
@@ -65,8 +66,8 @@ void uart_init_ow(void)
 
 void uart_setCallbacks(uart_tx_cbt txCb, uart_rx_cbt rxCb)
 {
-    // uart_vars.txCb = txCb;
-    // uart_vars.rxCb = rxCb;
+    (void)txCb; // uart_vars.txCb = txCb;
+    (void)rxCb; // uart_vars.rxCb = rxCb;
 }
 
 void uart_enableInterrupts(void)
@@ -96,7 +97,7 @@ void uart_setCTS(bool state)
 
 void uart_writeByte(uint8_t byteToWrite)
 {
-    // uart_write(UART_DEV(1), &byteToWrite, 1);
+    (void)byteToWrite; // uart_write(UART_DEV(1), &byteToWrite, 1);
     // timer_set(RIOT_PERIPH_TIMER, 0, 10); /* TODO check offset */
     // timer_start(RIOT_PERIPH_TIMER);
 }

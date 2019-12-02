@@ -17,6 +17,15 @@
 #include "openstack.h"
 #include "radio.h"
 
+#include "drivers/common/openserial.h"
+#include "02b-MAChigh/schedule.h"
+#include "02b-MAChigh/neighbors.h"
+#include "02b-MAChigh/sixtop.h"
+#include "02a-MAClow/IEEE802154E.h"
+#include "cross-layers/openrandom.h"
+#include "cross-layers/openqueue.h"
+#include "cross-layers/idmanager.h"
+
 #include "board_ow.h"
 #include "radio_ow.h"
 
@@ -46,7 +55,8 @@ static char _stack[OW_SCHED_STACKSIZE];
 #ifdef OW_MAC_ONLY
 extern void mlme_sync_indication(void);
 extern void mlme_sync_loss_indication(void);
-extern void ow_mcps_data_confirm(int status);
+extern void timer_sixtop_management_fired(void);
+extern void timer_sixtop_sendEb_fired(void);
 #endif
 
 static void *_event_loop(void *arg);
@@ -79,31 +89,37 @@ void openwsn_bootstrap(void)
 #ifdef OW_MAC_ONLY
 static void _sixtop_management_fired(event_t *event)
 {
+    (void)event;
     timer_sixtop_management_fired();
 }
 
 static void _sixtop_sendEb_fired(event_t *event)
 {
+    (void)event;
     timer_sixtop_sendEb_fired();
 }
 
 static void _sixtop_notify_send_done(event_t *event)
 {
+    (void)event;
     task_sixtopNotifSendDone();
 }
 
 static void _sixtop_notify_receive(event_t *event)
 {
+    (void)event;
     task_sixtopNotifReceive();
 }
 
 static void _indicate_sync(event_t *event)
 {
+    (void)event;
     mlme_sync_indication();
 }
 
 static void _indicate_sync_loss(event_t *event)
 {
+    (void)event;
     mlme_sync_loss_indication();
 }
 

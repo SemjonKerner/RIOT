@@ -21,7 +21,10 @@
 
 #include "errno.h"
 #include "02b-MAChigh/schedule.h"
+#include "02b-MAChigh/sixtop.h"
 #include "cross-layers/idmanager.h"
+#include "cross-layers/packetfunctions.h"
+#include "cross-layers/openqueue.h"
 #include "openwsn.h"
 
 extern void ow_mcps_data_confirm(int status);
@@ -35,7 +38,7 @@ void upper_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
 }
 
 void upper_receive(OpenQueueEntry_t* msg) {
-    ow_mcps_data_indication(msg->payload, msg->length);
+    ow_mcps_data_indication((char*)msg->payload, msg->length);
     openqueue_freePacketBuffer(msg);
 }
 
@@ -55,9 +58,10 @@ int openwsn_mlme_set_link_request(bool add, int slot_offset, ow_cell_t type, boo
 
     int cell_type;
     switch(type) {
+        /* //TODO
         case OW_CELL_ADV:
             cell_type = CELLTYPE_TXRX;
-            break;
+            break;*/
         case OW_CELL_TX:
             cell_type = CELLTYPE_TX;
             break;
@@ -65,6 +69,7 @@ int openwsn_mlme_set_link_request(bool add, int slot_offset, ow_cell_t type, boo
             cell_type = CELLTYPE_RX;
             break;
         default:
+            cell_type = CELLTYPE_TXRX;
             break;
     }
 

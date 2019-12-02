@@ -423,6 +423,12 @@ ifneq (,$(filter gnrc_pktdump,$(USEMODULE)))
   USEMODULE += od
 endif
 
+ifneq (,$(filter gnrc_6top,$(USEMODULE)))
+  USEPKG += openwsn
+  USEMODULE += gnrc_netif
+  USEMODULE += event
+endif
+
 ifneq (,$(filter od,$(USEMODULE)))
   USEMODULE += fmt
 endif

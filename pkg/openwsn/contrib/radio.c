@@ -209,6 +209,8 @@ void radio_getReceivedFrame(uint8_t *bufRead,
                             uint8_t *lqi,
                             bool *crc)
 {
+    (void)maxBufLen;
+
     netdev_ieee802154_rx_info_t rx_info;
     int num_bytes;
 

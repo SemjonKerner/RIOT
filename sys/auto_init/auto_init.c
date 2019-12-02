@@ -125,6 +125,16 @@ void auto_init(void)
         extern void skald_init(void);
         skald_init();
     }
+    if (IS_USED(MODULE_OPENWSN)) {
+        LOG_DEBUG("Auto init openwsn package.\n");
+        extern void openwsn_bootstrap(void);
+        openwsn_bootstrap();
+    }
+    if (IS_USED(MODULE_GNRC_6TOP)) {
+        LOG_DEBUG("Auto init openwsn package.\n");
+        extern void gnrc_6top_init(void);
+        gnrc_6top_init();
+    }
     if (IS_USED(MODULE_CORD_COMMON)) {
         LOG_DEBUG("Auto init cord_common.\n");
         extern void cord_common_init(void);
@@ -155,7 +165,6 @@ void auto_init(void)
         extern void sock_dtls_init(void);
         sock_dtls_init();
     }
-
     /* initialize USB devices */
     if (IS_USED(MODULE_AUTO_INIT_USBUS)) {
         LOG_DEBUG("Auto init USB.\n");

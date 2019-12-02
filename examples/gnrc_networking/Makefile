@@ -11,6 +11,7 @@ RIOTBASE ?= $(CURDIR)/../..
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
+#USEMODULE += gnrc_6top
 # Activate ICMPv6 error messages
 USEMODULE += gnrc_icmpv6_error
 # Specify the mandatory networking modules for IPv6 and UDP
@@ -45,9 +46,13 @@ DEVELHELP ?= 1
 # Uncomment this to join RPL DODAGs even if DIOs do not contain
 # DODAG Configuration Options (see the doc for more info)
 # CFLAGS += -DGNRC_RPL_DODAG_CONF_OPTIONAL_ON_JOIN
+CFLAGS += -DOW_MAC_ONLY
+CFLAGS += -DDEBUG_ASSERT_VERBOSE
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
+
+WERROR=0
 
 include $(RIOTBASE)/Makefile.include
 
