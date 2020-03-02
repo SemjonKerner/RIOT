@@ -34,6 +34,7 @@
 #define CONF_COMM_BUZZER    {0x23, 0x01}
 #define CONF_COMM_CHAN      (11U)
 #define BUZZER_QUEUE_SIZE   (8)
+#define LOUDNESS            (80U)
 
 static msg_t buzzer_msg_queue[BUZZER_QUEUE_SIZE];
 
@@ -82,6 +83,14 @@ int main(void)
     netreg.demux_ctx = GNRC_NETREG_DEMUX_CTX_ALL;
     gnrc_netreg_register(GNRC_NETTYPE_UNDEF, &netreg);
 
+    for (int i = 0; i < 12; i+=2) {
+        pwm_init(PWM_DEV(0), PWM_LEFT, notes[i], res[i]);
+        pwm_set(PWM_DEV(0), 0, (LOUDNESS % 100));
+        xtimer_usleep(100000);
+    }
+    pwm_set(PWM_DEV(0), 0 , 0);
+
+
     /* loop */
     while (1) {
         /* receive distance data */
@@ -112,7 +121,7 @@ int main(void)
             continue;
         }
 
-        pwm_set(PWM_DEV(0), 0, 10);
+        pwm_set(PWM_DEV(0), 0, (LOUDNESS % 100));
 
         /* wait a little and stop pwm */
         xtimer_usleep(100000);
