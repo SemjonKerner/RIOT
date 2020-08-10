@@ -30,6 +30,7 @@
 
 #include "net/ieee802154.h"
 #include "periph/timer.h"
+#include "xtimer.h"
 #include "net/netdev/ieee802154.h"
 #include "nrf802154.h"
 
@@ -122,7 +123,7 @@ static inline bool _ack_expected(void)
             txbuf[1] & IEEE802154_FCF_ACK_REQ);
 }
 
-static inline bool _ack_xmit_required(void)
+static inline bool _ack_transmit_required(void)
 {
     return (_setting_isset(NRF802154_OPT_AUTOACK) &&
             rxbuf[1] & IEEE802154_FCF_ACK_REQ);
@@ -301,11 +302,11 @@ static void _send_ack(void)
 
 static bool _ack_frame_filter(void)
 {
-    size_t psdu_len = rxbuf[0];
+    //size_t psdu_len = rxbuf[0];
     return ((NRF_RADIO->CRCSTATUS == 1) &&
-            (psdu_len == (IEEE802154_FCF_LEN + 1)) &&
+            //(psdu_len == (IEEE802154_FCF_LEN + 1)) &&
             ((rxbuf[1] & IEEE802154_FCF_TYPE_MASK) == IEEE802154_FCF_TYPE_ACK) &&
-            txbuf[3] == ieee802154_get_seq(&rxbuf[1]));
+            (txbuf[3] == ieee802154_get_seq(&rxbuf[1])));
 }
 
 static void _set_chan(uint16_t chan)
@@ -366,12 +367,15 @@ static void _timer_cb(void *arg, int chan)
         case NRF802154_STATE_AACK:
             /* Transmit ack */
             _send_ack();
+            //printf("!!! SENT ACK !!!\n");
+            xtimer_usleep(200);
             break;
         case NRF802154_STATE_ACKWAIT:
             /* Timeout waiting for ACK, TACK is more than SIFS and LIFS, no
-             * need to wait addionally */
+             * need to wait additionally */
             if (_retransmissions >= _retrans_max) {
                 _isr_tx_complete();
+                // printf("!!! MAX RETRANSMISSIONS !!!\n");
             }
             else {
                 _enable_tx();
@@ -500,7 +504,7 @@ static int _send(netdev_t *dev,  const iolist_t *iolist)
     /* set interframe spacing based on packet size */
     unsigned int ifs = (len + IEEE802154_FCS_LEN > SIFS_MAXPKTSIZE) ? LIFS
                                                                     : SIFS;
-    timer_set(NRF802154_TIMER, 0, ifs);
+    _set_and_start_timer(ifs);
 
     return len;
 }
@@ -699,7 +703,7 @@ void isr_radio(void)
                         (netdev_ieee802154_dst_filter(&nrf802154_dev,
                                                       &rxbuf[1]) == 0)) {
                         _event_flags |= RX_COMPLETE;
-                        if (_ack_xmit_required()) {
+                        if (_ack_transmit_required()) {
                             _last_seq_no = ieee802154_get_seq(&rxbuf[1]);
                             _state = NRF802154_STATE_AACK;
                             _set_and_start_timer(SIFS);
@@ -713,6 +717,7 @@ void isr_radio(void)
                 else if (_state == NRF802154_STATE_ACKWAIT) {
                     /* Check if this is the expected ACK frame */
                     if (_ack_frame_filter()) {
+                        //printf("!!! ACK RECEIVED !!!\n");
                         timer_stop(NRF802154_TIMER);
                         _state = NRF802154_STATE_TX;
                         _isr_tx_complete();
